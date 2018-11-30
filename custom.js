@@ -13,7 +13,7 @@ class App extends Component {
     var accountInfo = optly.get("plan", function(res){
       console.log(res);
       this.setState({ projectData: res });
-    });
+    }).bind(this);
 	}
 
 	render(props, state) {
