@@ -3,6 +3,6 @@ var optly = new OptimizelyAPI({
                 client_id: 12254990965
             });
 
-var accountInfo = optly.get("plan",null,function(res){
+var accountInfo = optly.get("plan", function(res){
   console.log(res);
 });
