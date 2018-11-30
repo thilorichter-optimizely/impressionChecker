@@ -7,6 +7,7 @@ var optly = new OptimizelyAPI({
 
 const { Component, h, render } = window.preact;
 
+render(h(App), document.body);
 
 /** Example classful component */
 class App extends Component {
