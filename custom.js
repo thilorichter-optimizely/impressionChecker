@@ -3,11 +3,6 @@ var optly = new OptimizelyAPI({
                 client_id: 12254990965
             });
 
-var accountInfo = optly.get("plan", function(res){
-  console.log(res);
-});
-
-
 'use strict';
 
 const { Component, h, render } = window.preact;
@@ -16,8 +11,12 @@ const { Component, h, render } = window.preact;
 /** Example classful component */
 class App extends Component {
 	componentDidMount() {
-		this.setState({ message:'Hello!' });
+    var accountInfo = optly.get("plan", function(res){
+      console.log(res);
+      this.setState({ projectData: res });
+    });
 	}
+  
 	render(props, state) {
 		return (
 			h('div', {id:'app'},
