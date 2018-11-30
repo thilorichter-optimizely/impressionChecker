@@ -10,13 +10,27 @@ const { Component, h, render } = window.preact;
 /** Example classful component */
 class App extends Component {
   componentWillMount(){
-    this.state = {accountData: {product_usages: [{projects: {}}]}};
+    this.state = {projects: {}};
   }
 
   componentDidMount() {
     var accountInfo = optly.get("plan", function(res){
-      this.setState({accountData: res});
-      // console.log(this.state);
+      this.setState({projects: res.product_usages[0].projects});
+
+      var projectList = this.state.projects;
+
+      optly.get("projects?per_page=60", function(projects){
+        for (var project in projectList) {
+
+          var replacementProject = _.find(projects, {id: parseInt(project)});
+
+          Object.defineProperty(projectList, replacementProject.name, Object.getOwnPropertyDescriptor(projectList, project));
+          delete projectList[project];
+        }
+
+        this.setState({projects: projectList});
+      }.bind(this));
+
     }.bind(this));
 	}
 
@@ -24,19 +38,22 @@ class App extends Component {
     return (
       h('div', {id:'app'},
 				//h(Header, { message: state.message }),
-				h(UsageList, { projectData: this.state.accountData.product_usages[0].projects })
+				h(UsageList, { projectData: this.state.projects })
 			)
 		);
 	}
 }
 
 const UsageList = (props) => {
-  console.log(props.projectData);
   var projectElements = [];
 
   for (var project in props.projectData){
     projectElements.push(
-      h('div', null, props.projectData[project])
+      h('div', null, [
+        h('div', null, project),
+        h('div', null, props.projectData[project]),
+        h('br', null, null)
+      ])
     );
   }
 
