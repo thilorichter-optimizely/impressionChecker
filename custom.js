@@ -16,11 +16,11 @@ class App extends Component {
       this.setState({ projectData: res });
     });
 	}
-  
+
 	render(props, state) {
 		return (
 			h('div', {id:'app'},
-				h(Header, { message: state.message }),
+				//h(Header, { message: state.message }),
 				h(Main)
 			)
 		);
