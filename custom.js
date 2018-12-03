@@ -10,25 +10,44 @@ const { Component, h, render } = window.preact;
 /** Example classful component */
 class App extends Component {
   componentWillMount(){
-    this.state = {projects: {}};
+    this.state = {projects: []};
   }
 
   componentDidMount() {
+    // Get plan data from Optimizely API
     var accountInfo = optly.get("plan", function(res){
-      this.setState({projects: res.product_usages[0].projects});
 
-      var projectList = this.state.projects;
+      // Sort project object into a collection to make it easier to work with
+      var projectCollection = [];
 
-      optly.get("projects?per_page=60", function(projects){
-        for (var project in projectList) {
+      for (var project in res.product_usages[0].projects) {
+        projectCollection.push(
+          {
+            id: project,
+            name: "",  // Needs to be populated with another API call after
+            usage: res.product_usages[0].projects[project]
+          }
+        );
+      };
 
-          var replacementProject = _.find(projects, {id: parseInt(project)});
 
-          Object.defineProperty(projectList, replacementProject.name, Object.getOwnPropertyDescriptor(projectList, project));
-          delete projectList[project];
-        }
+      // Set initial state to contain all plan data
+      this.setState({projects: projectCollection});
 
-        this.setState({projects: projectList});
+      // Map names to the ids by checking API
+      optly.get("projects?per_page=60", function(allProjectData){
+
+        projectCollection = projectCollection.map(function(project){
+          return {
+            id: project.id,
+            name: _.find(allProjectData, {id: parseInt(project.id)}).name,
+            usage: project.usage
+          }
+        });
+
+        projectCollection = _.orderBy(projectCollection, ['usage'], ['desc']);
+
+        this.setState({projects: projectCollection});
       }.bind(this));
 
     }.bind(this));
@@ -37,7 +56,6 @@ class App extends Component {
 	render(props, state) {
     return (
       h('div', {id:'app'},
-				//h(Header, { message: state.message }),
 				h(UsageList, { projectData: this.state.projects })
 			)
 		);
@@ -45,42 +63,19 @@ class App extends Component {
 }
 
 const UsageList = (props) => {
-  var projectElements = [];
-
-  for (var project in props.projectData){
-    projectElements.push(
-      h('div', null, [
-        h('div', null, project),
-        h('div', null, props.projectData[project]),
-        h('br', null, null)
-      ])
-    );
+  function numberWithCommas(x) {
+      return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
 
+  var projectElements = props.projectData.map(function(project){
+    return h('div', null, [
+      h('div', null, project.name),
+      h('div', null, numberWithCommas(project.usage)),
+      h('br', null, null)
+    ]);
+  });
+
   return h('div', null, projectElements);
-};
-
-/** Instead of JSX, use: h(type, props, ...children) */
-// class UsageList extends Component {
-// 	render() {
-//     console.log(props);
-//     const items = [1,2,3,4,5].map( (item) => (
-// 			h('li', {id:item}, 'Item '+item)
-// 		));
-// 		return (
-// 			h('main', null,
-// 				h('ul', null, items)
-// 			)
-// 		);
-// 	}
-// }
-
-/** Components can just be pure functions */
-const Header = (props) => {
-	return h('header', null,
-		h('h1', null, 'App'),
-		props.message && h('h2', null, props.message)
-	);
 };
 
 render(h(App), document.body);
